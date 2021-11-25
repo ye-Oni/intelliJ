@@ -97,4 +97,16 @@ public class UserService {
             throw new BaseException(DATABASE_ERROR);
         }
     }
+
+    // 팔로우 수정 (PATCH)
+    public void modifyFollow(PatchFollowReq patchFollowReq) throws BaseException {
+        try {
+            int result = userDao.modifyFollow(patchFollowReq);
+            if (result == 0) {
+                throw new BaseException(MODIFY_FAIL_FOLLOW);
+            }
+        } catch (Exception exception) {
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
 }

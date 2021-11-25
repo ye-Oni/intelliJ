@@ -39,6 +39,7 @@ public enum BaseResponseStatus {
     POST_POSTS_INVALID_IMGURL(false,2023,"이미지 형식이 올바르지 않습니다."),
     POST_POSTS_EMPTY_USERID(false,2024,"로그인해주세요. 게시물 작성 권한이 없습니다."),
     POST_POSTS_EMPTY_IMGURL(false,2025,"이미지를 첨부해주세요."),
+    POST_POSTS_EMPTY_COMMENT(false,2026,"댓글을 작성해주세요."),
 
 
 
@@ -64,6 +65,9 @@ public enum BaseResponseStatus {
     //[PATCH] /users/{userIdx}
     MODIFY_FAIL_USERNAME(false,4014,"유저네임 수정 실패"),
     MODIFY_FAIL_TITLE(false,4015,"게시물 제목 수정 실패"),
+    MODIFY_FAIL_POSTID(false,4016,"좋아요 누르기 수정 실패"),
+    MODIFY_FAIL_COMMENT(false,4017, "댓글 수정 실패"),
+    MODIFY_FAIL_FOLLOW(false,4018, "팔로우 수정 실패"),
 
     PASSWORD_ENCRYPTION_ERROR(false, 4011, "비밀번호 암호화에 실패하였습니다."),
     PASSWORD_DECRYPTION_ERROR(false, 4012, "비밀번호 복호화에 실패하였습니다.");

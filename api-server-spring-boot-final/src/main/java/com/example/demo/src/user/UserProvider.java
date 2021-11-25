@@ -113,4 +113,23 @@ public class UserProvider {
         }
     }
 
+    // 특정 유저를 팔로우하는 사람들 조회
+    public List<GetFollowingRes> getFollowing(int followingID) throws BaseException {
+        try {
+            List<GetFollowingRes> getFollowingRes = userDao.getFollowing(followingID);
+            return getFollowingRes;
+        } catch (Exception exception) {
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
+    // 특정 유저가 팔로우하는 사람들 조회
+    public List<GetFollowerRes> getFollower(int followerID) throws BaseException {
+        try {
+            List<GetFollowerRes> getFollowerRes = userDao.getFollower(followerID);
+            return getFollowerRes;
+        } catch (Exception exception) {
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
 }

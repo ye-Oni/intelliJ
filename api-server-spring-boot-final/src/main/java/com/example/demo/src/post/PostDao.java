@@ -2,7 +2,6 @@ package com.example.demo.src.post;
 
 
 import com.example.demo.src.post.model.*;
-import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -74,11 +73,39 @@ public class PostDao {
         return this.jdbcTemplate.update(modifyPostNameQuery, modifyPostNameParams); // 대응시켜 매핑시켜 쿼리 요청(생성했으면 1, 실패했으면 0)
     }
 
+    // 댓글 수정
+    public int modifyComment(PatchCommentReq patchCommentReq) {
+        String modifyCommentQuery = "update Comment set comment = ? where postID = ? and userID = ?";
+        Object[] modifyCommentParams = new Object[]{patchCommentReq.getComment(), patchCommentReq.getPostID(), patchCommentReq.getUserID()};
+
+        return this.jdbcTemplate.update(modifyCommentQuery, modifyCommentParams);
+    }
+
+//    // 좋아요 수정
+//    public int modifyLikePost(PatchLikeReq patchLikeReq) {
+//        String modifyLikeQuery = "update Post set postID = ? where userID = ? ";
+//        Object[] modifyLikeQueryParams = new Object[]{patchLikeReq.getPostID(), patchLikeReq.getUserID()};
+//
+//        return this.jdbcTemplate.update(modifyLikeQuery, modifyLikeQueryParams);
+//    }
+
+
+    // 댓글 작성
+    public int createComment(PostCommentReq postCommentReq) {
+        String createCommentQuery = "insert into Comment (userID, postID, comment) VALUES (?,?,?)";
+        Object[] createCommentParams = new Object[]{postCommentReq.getUserID(), postCommentReq.getPostID(), postCommentReq.getComment()};
+        this.jdbcTemplate.update(createCommentQuery, createCommentParams);
+
+        String lastInserIdQuery = "select last_insert_id()";
+        return this.jdbcTemplate.queryForObject(lastInserIdQuery, int.class);
+    }
+
+
     // Post 테이블에 존재하는 전체 유저들의 정보 조회
-    public List<GetPostRes> getPosts() {
+    public List<GetPostRes1> getPosts() {
         String getPostsQuery = "select * from Post"; //Post 테이블에 존재하는 모든 회원들의 정보를 조회하는 쿼리
         return this.jdbcTemplate.query(getPostsQuery,
-                (rs, rowNum) -> new GetPostRes(
+                (rs, rowNum) -> new GetPostRes1(
                         rs.getInt("postID"),
                         rs.getInt("userID"),
                         rs.getString("title"),
@@ -95,36 +122,99 @@ public class PostDao {
                 (rs, rowNum) -> new GetPostRes(
                         rs.getInt("postID"),
                         rs.getInt("userID"),
+                        rs.getString("name"),
                         rs.getString("title"),
-                        rs.getString("imgUrl")), // RowMapper(위의 링크 참조): 원하는 결과값 형태로 받기
+                        rs.getString("imgUrl"),
+                        rs.getInt("좋아요갯수"),
+                        rs.getInt("댓글갯수")), // RowMapper(위의 링크 참조): 원하는 결과값 형태로 받기
                 getPostsByUserIDParams); // 해당 닉네임을 갖는 모든 Post 정보를 얻기 위해 jdbcTemplate 함수(Query, 객체 매핑 정보, Params)의 결과 반환
     }
 
     // 해당 postID를 갖는 게시물
     public GetPostRes getPost(int postID) {
-        String getPostQuery = "select * from Post where postID = ?"; // 해당 postID를 만족하는 유저를 조회하는 쿼리문
+        String getPostQuery = "SELECT Post.postID, User.userID, User.name, Post.title, Post.imgUrl, count(likeIdx) as 좋아요갯수, count(distinct Comment.postID) as 댓글갯수\n" +
+                "    FROM Post\n" +
+                "        INNER JOIN User\n" +
+                "            ON User.userID = Post.userID\n" +
+                "        INNER JOIN Comment\n" +
+                "            ON Post.postID = Comment.postID\n" +
+                "        INNER JOIN `Like`\n" +
+                "            ON `Like`.postID = Post.postID\n" +
+                "    WHERE Post.postID = ?;"; // 해당 postID를 만족하는 유저를 조회하는 쿼리문
         int getPostParams = postID;
         return this.jdbcTemplate.queryForObject(getPostQuery,
                 (rs, rowNum) -> new GetPostRes(
                         rs.getInt("postID"),
                         rs.getInt("userID"),
+                        rs.getString("name"),
                         rs.getString("title"),
-                        rs.getString("imgUrl")),
+                        rs.getString("imgUrl"),
+                        rs.getInt("좋아요갯수"),
+                        rs.getInt("댓글갯수")),
                         getPostParams); // 한 개의 회원정보를 얻기 위한 jdbcTemplate 함수(Query, 객체 매핑 정보, Params)의 결과 반환
     }
 
-//    // 해당 user가 작성한 게시물 조회
-//    public GetPostRes getUserPost(int userID) {
-//        String getPostQuery = "select User.userID, name, Post.postID, title, imgUrl FROM User inner join Post on User.userID=Post.userID WHERE userID = ?";
-//        int getUserPostParams = userID;
-//        return this.jdbcTemplate.queryForObject(getPostQuery,
-//                (rs, rowNum) -> new GetPostRes(
-//                        rs.getInt("userID"),
-//                        rs.getInt("postID"),
-//                        rs.getString("title"),
-//                        rs.getString("imgUrl")),
-//                getUserPostParams);
-//    }
+    // 해당 게시물(postID)에 좋아요를 누른 사용자 정보(아이디, 이름) 조회
+    public List<GetLikeRes> getLike(int postID) {
+        String getLikeQuery = "SELECT User.userID, User.name FROM `Like` INNER JOIN Post ON Post.postID = `Like`.postID INNER JOIN User ON User.userID = `Like`.userID WHERE Post.postID = ?";
+        int getLikeParams = postID;
+        return this.jdbcTemplate.query(getLikeQuery,
+                (rs, rowNum) -> new GetLikeRes(
+                        rs.getInt("userID"),
+                        rs.getString("name")),
+                getLikeParams);
+    }
+
+    // 내가 좋아요 누른 게시물 목록 조회 (사진만 보임)
+    public List<GetUserLikeRes> getUserLike(int userID) {
+        String getUserLikeQuery = "SELECT Post.imgUrl\n" +
+                "    FROM `Like`\n" +
+                "        INNER JOIN Post\n" +
+                "            on `Like`.postID = Post.postID\n" +
+                "        INNER JOIN User\n" +
+                "            on `Like`.userID = User.useriD\n" +
+                "    WHERE `Like`.userID = ?;";
+        int getUserLikeParams = userID;
+        return this.jdbcTemplate.query(getUserLikeQuery,
+                (rs, rowNum) -> new GetUserLikeRes(
+                        rs.getString("imgUrl")),
+                getUserLikeParams);
+    }
+
+    // 해당 user가 작성한 게시물 조회
+    public List<GetUserPostRes> getUserPost(int userID) {
+        String getUserPostQuery = "SELECT User.userID, User.name, Post.postID, Post.imgUrl\n" +
+                "    FROM Post\n" +
+                "        INNER JOIN User\n" +
+                "            ON User.userID = Post.userID\n" +
+                "    WHERE User.userID=?;";
+        int getUserPostParams = userID;
+        return this.jdbcTemplate.query(getUserPostQuery,
+                (rs, rowNum) -> new GetUserPostRes(
+                        rs.getInt("userID"),
+                        rs.getString("name"),
+                        rs.getInt("postID"),
+                        rs.getString("imgUrl")),
+                getUserPostParams);
+    }
+
+    // 게시물 별 댓글 조회
+    public List<GetCommentRes> getComment(int postID) {
+        String getCommentQuery = "SELECT Post.title,User.name, Comment.comment\n" +
+                "    FROM Comment\n" +
+                "        INNER JOIN User\n" +
+                "        ON User.userID = Comment.userID\n" +
+                "        INNER JOIN Post\n" +
+                "        ON Comment.postID = Post.postID\n" +
+                "    WHERE Comment.postID = ?;";
+        int getCommentParams = postID;
+        return this.jdbcTemplate.query(getCommentQuery,
+                (rs, rowNum) -> new GetCommentRes(
+                        rs.getString("title"),
+                        rs.getString("name"),
+                        rs.getString("comment")),
+                getCommentParams);
+    }
 }
 
 

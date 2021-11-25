@@ -15,4 +15,5 @@ public class Post {
     private int userID;
     private String title;
     private String imgUrl;
+
 }

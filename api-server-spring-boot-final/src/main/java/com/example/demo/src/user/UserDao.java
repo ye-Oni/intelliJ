@@ -1,6 +1,7 @@
 package com.example.demo.src.user;
 
 
+import com.example.demo.src.post.model.PatchCommentReq;
 import com.example.demo.src.user.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -100,6 +101,14 @@ public class UserDao {
         return this.jdbcTemplate.update(modifyUserNameQuery, modifyUserNameParams); // 대응시켜 매핑시켜 쿼리 요청(생성했으면 1, 실패했으면 0) 
     }
 
+    // 팔로우 변경
+    public int modifyFollow(PatchFollowReq patchFollowReq) {
+        String modifyFollowQuery = "update Follow set followerID = ? where followingID = ?";
+        Object[] modifyFollowParams = new Object[]{patchFollowReq.getFollowerID(), patchFollowReq.getFollowingID()};
+
+        return this.jdbcTemplate.update(modifyFollowQuery, modifyFollowParams);
+    }
+
 
     // 로그인: 해당 email에 해당되는 user의 암호화된 비밀번호 값을 가져온다.
     public User getPwd(PostLoginReq postLoginReq) {
@@ -153,5 +162,35 @@ public class UserDao {
                         rs.getString("Email"),
                         rs.getString("password")), // RowMapper(위의 링크 참조): 원하는 결과값 형태로 받기
                 getUserParams); // 한 개의 회원정보를 얻기 위한 jdbcTemplate 함수(Query, 객체 매핑 정보, Params)의 결과 반환
+    }
+
+    // 특정 유저가 팔로우하는 사람들 조회
+    public List<GetFollowingRes> getFollowing(int followingID) {
+        String getFollowingQuery = "SELECT Follow.followerID, Follow.followingID, User.name\n" +
+                "    FROM Follow\n" +
+                "        inner join User on Follow.followingID = User.userID\n" +
+                "    WHERE Follow.followerID = ?;";
+        int getFollowingParams = followingID;
+        return this.jdbcTemplate.query(getFollowingQuery,
+                (rs, rowNum) -> new GetFollowingRes(
+                        rs.getInt("followerID"),
+                        rs.getInt("followingID"),
+                        rs.getString("name")),
+                getFollowingParams);
+    }
+
+    //특정 유저를 팔로우하는 사람들 조회
+    public List<GetFollowerRes> getFollower(int followerID) {
+        String getFollowerQuery = "SELECT Follow.followingID, Follow.followerID, User.name\n" +
+                "    FROM Follow\n" +
+                "        INNER JOIN User on Follow.followerID = User.userID\n" +
+                "    WHERE Follow.followingID = ?;";
+        int getFollowerParams = followerID;
+        return this.jdbcTemplate.query(getFollowerQuery,
+                (rs, rowNum) -> new GetFollowerRes(
+                        rs.getInt("followingID"),
+                        rs.getInt("followerID"),
+                        rs.getString("name")),
+                getFollowerParams);
     }
 }

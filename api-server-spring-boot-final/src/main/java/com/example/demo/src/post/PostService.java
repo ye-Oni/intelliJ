@@ -38,10 +38,10 @@ public class PostService {
         this.jwtService = jwtService; // JWT부분은 7주차에 다루므로 모르셔도 됩니다!
 
     }
+
     // ******************************************************************************
     // 게시물 업로드(POST)
     public PostPostRes createPost(PostPostReq postPostReq) throws BaseException {
-
 
         try {
             int postID = postDao.createPost(postPostReq);
@@ -57,6 +57,16 @@ public class PostService {
         }
     }
 
+    // 댓글 작성(POST)
+    public PostCommentRes createComment(PostCommentReq postCommentReq) throws BaseException {
+        try {
+            int commentIdx = postDao.createComment(postCommentReq);
+            return new PostCommentRes(commentIdx);
+        } catch (Exception exception) {
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
     // 회원정보 수정(Patch)
     public void modifyPostTitle(PatchPostReq patchPostReq) throws BaseException {
         try {
@@ -68,4 +78,29 @@ public class PostService {
             throw new BaseException(DATABASE_ERROR);
         }
     }
+
+    // 댓글 수정(patch)
+    public void modifyComment(PatchCommentReq patchCommentReq) throws BaseException {
+        try {
+            int result = postDao.modifyComment(patchCommentReq);
+            if (result == 0) {
+                throw new BaseException(MODIFY_FAIL_COMMENT);
+            }
+        } catch (Exception exception) {
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
 }
+
+//    // 좋아요 수정(Patch)
+//    public void modifyLikePost(PatchLikeReq patchLikeReq) throws BaseException {
+//        try {
+//            int result = postDao.modifyLikePost(patchLikeReq);
+//            if (result == 0) {
+//                throw new BaseException(MODIFY_FAIL_POSTID);
+//            }
+//        } catch (Exception exception) {
+//            throw new BaseException(DATABASE_ERROR);
+//        }
+//    }

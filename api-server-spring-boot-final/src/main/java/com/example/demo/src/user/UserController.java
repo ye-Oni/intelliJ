@@ -184,6 +184,44 @@ public class UserController {
     }
 
     /**
+     * 특정 유저를 팔로우하는 사람들 조회 API
+     * [GET] /users/following/:followingID
+     */
+    @ResponseBody
+    @GetMapping("/following/{followingID}") // (GET) 127.0.0.1:9000/app/users/:userID
+    public BaseResponse<List<GetFollowingRes>> getFollowing(@PathVariable("followingID") int followingID) {
+        // @PathVariable RESTful(URL)에서 명시된 파라미터({})를 받는 어노테이션, 이 경우 userId값을 받아옴.
+        //  null값 or 공백값이 들어가는 경우는 적용하지 말 것
+        //  .(dot)이 포함된 경우, .을 포함한 그 뒤가 잘려서 들어감
+        // Get Users
+        try {
+            List<GetFollowingRes> getFollowingRes = userProvider.getFollowing(followingID);
+            return new BaseResponse<>(getFollowingRes);
+        } catch (BaseException exception) {
+            return new BaseResponse<>((exception.getStatus()));
+        }
+    }
+
+    /**
+     * 특정 유저가 팔로잉하는 사람들 조회 API
+     * [GET] /users/follower/:followerID
+     */
+    @ResponseBody
+    @GetMapping("/follower/{followerID}") // (GET) 127.0.0.1:9000/app/users/:userID
+    public BaseResponse<List<GetFollowerRes>> getFollower(@PathVariable("followerID") int followerID) {
+        // @PathVariable RESTful(URL)에서 명시된 파라미터({})를 받는 어노테이션, 이 경우 userId값을 받아옴.
+        //  null값 or 공백값이 들어가는 경우는 적용하지 말 것
+        //  .(dot)이 포함된 경우, .을 포함한 그 뒤가 잘려서 들어감
+        // Get Users
+        try {
+            List<GetFollowerRes> getFollowerRes = userProvider.getFollower(followerID);
+            return new BaseResponse<>(getFollowerRes);
+        } catch (BaseException exception) {
+            return new BaseResponse<>((exception.getStatus()));
+        }
+    }
+
+    /**
      * 유저정보변경 API
      * [PATCH] /users/:userID
      */
@@ -192,15 +230,15 @@ public class UserController {
     public BaseResponse<String> modifyUserName(@PathVariable("userID") int userID, @RequestBody User user) {
         try {
 /**
-  *********** 해당 부분은 7주차 - JWT 수업 후 주석해체 해주세요!  ****************
-            //jwt에서 idx 추출.
-            int userIDByJwt = jwtService.getUserID();
-            //userID와 접근한 유저가 같은지 확인
-            if(userID != userIDByJwt){
-                return new BaseResponse<>(INVALID_USER_JWT);
-            }
-            //같다면 유저네임 변경
-  **************************************************************************
+ *********** 해당 부분은 7주차 - JWT 수업 후 주석해체 해주세요!  ****************
+ //jwt에서 idx 추출.
+ int userIDByJwt = jwtService.getUserID();
+ //userID와 접근한 유저가 같은지 확인
+ if(userID != userIDByJwt){
+ return new BaseResponse<>(INVALID_USER_JWT);
+ }
+ //같다면 유저네임 변경
+ **************************************************************************
  */
             PatchUserReq patchUserReq = new PatchUserReq(userID, user.getName());
             userService.modifyUserName(patchUserReq);
@@ -211,7 +249,25 @@ public class UserController {
             return new BaseResponse<>((exception.getStatus()));
         }
     }
-}
+
+        /** 팔로우 하는 사람 변경 API
+         * [PATCH] /users/follow/:followerID
+         */
+        @ResponseBody
+        @PatchMapping("/follow/{followerID}")
+        public BaseResponse<String> modifyFollow ( @PathVariable("followerID") int followerID,
+        @RequestBody Follow follow){
+            try {
+                PatchFollowReq patchFollowReq = new PatchFollowReq(followerID, follow.getFollowingID());
+                userService.modifyFollow(patchFollowReq);
+
+                String result = "팔로우 정보가 수정되었습니다.";
+                return new BaseResponse<>(result);
+            } catch (BaseException exception) {
+                return new BaseResponse<>((exception.getStatus()));
+            }
+        }
+    }
 
 
 ///**
