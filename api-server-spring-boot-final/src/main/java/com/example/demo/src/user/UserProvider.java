@@ -53,8 +53,8 @@ public class UserProvider {
             int userID = userDao.getPwd(postLoginReq).getUserID();
             return new PostLoginRes(userID);
 //  *********** 해당 부분은 7주차 - JWT 수업 후 주석해제 및 대체해주세요!  **************** //
-//            String jwt = jwtService.createJwt(userID);
-//            return new PostLoginRes(userID,jwt);
+            String jwt = jwtService.createJwt(userID);
+            return new PostLoginRes(userID,jwt);
 //  **************************************************************************
         } else { // 비밀번호가 다르다면 에러메세지를 출력한다.
             throw new BaseException(FAILED_TO_LOGIN);
